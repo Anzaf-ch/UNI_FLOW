@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { LogIn, Mail, Lock, ArrowRight } from 'lucide-react';
 import { storageService } from '../services/localStorageService';
 import { useAuthStore } from '../store';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const Login: React.FC = () => {

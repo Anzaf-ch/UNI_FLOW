@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, MoreVertical, AlertCircle } from 'lucide-react';
+import { Edit2, Trash2, MoreVertical, AlertCircle, Eye, UserX, UserCheck, GraduationCap } from 'lucide-react';
 import { useStudentStore } from '../../store/useStudentStore';
 import { Student } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 
 export const StudentTable = ({ onEdit }: { onEdit: (student: Student) => void }) => {
-  const { students, loading, filters, deleteStudent } = useStudentStore();
+  const { students, loading, filters, setFilter, deleteStudent, updateStudent } = useStudentStore();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const filteredStudents = students
     .filter(s => {
@@ -49,7 +51,7 @@ export const StudentTable = ({ onEdit }: { onEdit: (student: Student) => void })
         <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Aucun dossier trouvé</h3>
         <p className="text-sm text-slate-400 mt-2 text-center max-w-xs font-semibold">Nous n'avons trouvé aucun étudiant correspondant à vos critères de recherche actuels.</p>
         <button 
-          onClick={() => {}} 
+          onClick={() => { setFilter('search', ''); setFilter('filiere', 'Toutes'); setFilter('classe', 'Toutes'); }} 
           className="mt-6 px-6 py-2.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-sm shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all"
         >
           Voir tous les étudiants
@@ -133,9 +135,46 @@ export const StudentTable = ({ onEdit }: { onEdit: (student: Student) => void })
                       >
                         <Trash2 size={16} />
                       </button>
-                      <button className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-all">
-                        <MoreVertical size={16} />
-                      </button>
+                      <div className="relative">
+                        <button 
+                          onClick={() => setMenuOpenId(menuOpenId === student.id ? null : student.id)}
+                          className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-all"
+                          title="Plus d'actions"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        {menuOpenId === student.id && (
+                          <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-md shadow-xl z-30 overflow-hidden text-left">
+                            <button
+                              onClick={() => { toast(`${student.lastName} ${student.firstName} • ${student.matricule}`); setMenuOpenId(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                            >
+                              <Eye size={14} /> Voir le dossier
+                            </button>
+                            {student.status === 'active' ? (
+                              <button
+                                onClick={() => { updateStudent(student.id, { status: 'suspended' as any }); setMenuOpenId(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 transition-colors"
+                              >
+                                <UserX size={14} /> Suspendre
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => { updateStudent(student.id, { status: 'active' as any }); setMenuOpenId(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              >
+                                <UserCheck size={14} /> Réactiver
+                              </button>
+                            )}
+                            <button
+                              onClick={() => { updateStudent(student.id, { status: 'graduated' as any }); setMenuOpenId(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            >
+                              <GraduationCap size={14} /> Marquer diplômé
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </motion.tr>

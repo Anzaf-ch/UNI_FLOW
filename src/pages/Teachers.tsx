@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Users, 
   Search, 
   Plus, 
   MoreVertical, 
   Edit2, 
   Trash2, 
-  Mail, 
-  Phone, 
-  GraduationCap,
   Filter,
   X,
   UserPlus,
   LayoutGrid,
   List,
   Eye,
+  UserX,
+  UserCheck,
   ChevronLeft,
   ChevronRight,
   AlertCircle
@@ -35,6 +33,7 @@ export const Teachers: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
 
   const [formData, setFormData] = useState({
@@ -102,8 +101,14 @@ export const Teachers: React.FC = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
+  const setTeacherStatus = (teacher: Teacher, status: Teacher['status']) => {
+    storageService.update(storageService.KEYS.TEACHERS, teacher.id, { status });
+    toast.success('Statut mis à jour');
+    setMenuOpenId(null);
+    fetchTeachers();
+  };
+
+  const resetForm = () => {    setFormData({
       firstName: '',
       lastName: '',
       email: '',
@@ -183,7 +188,7 @@ export const Teachers: React.FC = () => {
                 onChange={(e) => setFilterSubject(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-100 rounded-sm py-3 pl-10 pr-8 text-[10px] font-black uppercase tracking-widest text-[#1e1b4b] focus:bg-white focus:border-indigo-600 outline-none appearance-none cursor-pointer"
               >
-                <option value="all text-slate-400">Toutes les matières</option>
+                <option value="all">Toutes les matières</option>
                 {subjects.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -286,6 +291,41 @@ export const Teachers: React.FC = () => {
                         >
                             <Trash2 size={14} />
                         </button>
+                        <div className="relative">
+                          <button
+                            onClick={() => setMenuOpenId(menuOpenId === teacher.id ? null : teacher.id)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-all"
+                            title="Plus d'actions"
+                          >
+                            <MoreVertical size={14} />
+                          </button>
+                          {menuOpenId === teacher.id && (
+                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-md shadow-xl z-30 overflow-hidden text-left">
+                              <button
+                                onClick={() => { toast(`${teacher.firstName} ${teacher.lastName} • ${teacher.specialty}`); setMenuOpenId(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                              >
+                                <Eye size={14} /> Voir le profil
+                              </button>
+                              {teacher.status !== 'active' && (
+                                <button
+                                  onClick={() => setTeacherStatus(teacher, 'active' as Teacher['status'])}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                >
+                                  <UserCheck size={14} /> Marquer actif
+                                </button>
+                              )}
+                              {teacher.status !== 'on_leave' && (
+                                <button
+                                  onClick={() => setTeacherStatus(teacher, 'on_leave' as Teacher['status'])}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-50 transition-colors"
+                                >
+                                  <UserX size={14} /> Mettre en congé
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                     </div>
                   </div>
 
@@ -385,9 +425,41 @@ export const Teachers: React.FC = () => {
                             >
                                 <Trash2 size={16} />
                             </button>
-                            <button className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-all hidden sm:block">
+                            <div className="relative hidden sm:block">
+                              <button
+                                onClick={() => setMenuOpenId(menuOpenId === teacher.id ? null : teacher.id)}
+                                className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-all"
+                                title="Plus d'actions"
+                              >
                                 <MoreVertical size={16} />
-                            </button>
+                              </button>
+                              {menuOpenId === teacher.id && (
+                                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-md shadow-xl z-30 overflow-hidden text-left">
+                                  <button
+                                    onClick={() => { toast(`${teacher.firstName} ${teacher.lastName} • ${teacher.specialty}`); setMenuOpenId(null); }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                  >
+                                    <Eye size={14} /> Voir le profil
+                                  </button>
+                                  {teacher.status !== 'active' && (
+                                    <button
+                                      onClick={() => setTeacherStatus(teacher, 'active' as Teacher['status'])}
+                                      className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    >
+                                      <UserCheck size={14} /> Marquer actif
+                                    </button>
+                                  )}
+                                  {teacher.status !== 'on_leave' && (
+                                    <button
+                                      onClick={() => setTeacherStatus(teacher, 'on_leave' as Teacher['status'])}
+                                      className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-50 transition-colors"
+                                    >
+                                      <UserX size={14} /> Mettre en congé
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>

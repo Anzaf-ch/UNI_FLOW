@@ -83,10 +83,11 @@ export const StudentHeader = ({ onAddClick }: { onAddClick: () => void }) => {
                      className="w-full bg-white border border-slate-200 rounded-sm px-4 py-3 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none appearance-none transition-all"
                   >
                     <option value="Toutes">Toutes les filières</option>
-                    <option value="Génie Logiciel">Génie Logiciel</option>
+                    <option value="Informatique">Informatique</option>
                     <option value="Économie">Économie</option>
                     <option value="Communication">Communication</option>
                     <option value="Droit">Droit</option>
+                    <option value="Management">Management</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
                 </div>

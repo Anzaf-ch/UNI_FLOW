@@ -4,9 +4,7 @@ import {
   BookOpen, 
   CreditCard, 
   TrendingUp,
-  AlertCircle,
   Clock,
-  ChevronRight,
   Sparkles,
   PieChart as PieChartIcon,
   BarChart as BarChartIcon
@@ -24,18 +22,20 @@ import {
   Cell
 } from 'recharts';
 import { motion } from 'motion/react';
+import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { storageService } from '../services/localStorageService';
-import { useAuthStore } from '../store';
 
 const COLORS = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6'];
 
-const StatCard = ({ title, value, trend, icon: Icon, color }: any) => (
+const StatCard = ({ title, value, trend, icon: Icon, iconClass }: any) => (
   <div className="bg-white border border-slate-200 p-6 rounded-md shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
     <div className={`absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity`}>
       <Icon size={80} />
     </div>
     <div className="flex items-center gap-3 mb-4">
-      <div className={`p-2.5 rounded-sm bg-${color}-50 text-${color}-600`}>
+      <div className={`p-2.5 rounded-sm ${iconClass || 'bg-indigo-50 text-indigo-600'}`}>
         <Icon size={20} />
       </div>
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
@@ -52,7 +52,6 @@ const StatCard = ({ title, value, trend, icon: Icon, color }: any) => (
 );
 
 export const Dashboard: React.FC = () => {
-  const { user } = useAuthStore();
   const [stats, setStats] = useState({
     students: 0,
     courses: 0,
@@ -82,7 +81,7 @@ export const Dashboard: React.FC = () => {
           courses: courses.length,
           revenue: income,
           studentsByFiliere: pieData.length > 0 ? pieData : [
-            { name: 'Génie Logiciel', value: 0 },
+            { name: 'Informatique', value: 0 },
             { name: 'Économie', value: 0 },
             { name: 'Communication', value: 0 },
             { name: 'Droit', value: 0 }
@@ -95,6 +94,31 @@ export const Dashboard: React.FC = () => {
 
     fetchStats();
   }, []);
+
+  const [showExpert, setShowExpert] = useState(false);
+
+  const handleGenerateReport = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('UniFlow - Rapport Global', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Genere le ${new Date().toLocaleString()}`, 14, 27);
+    autoTable(doc, {
+      startY: 34,
+      head: [['Indicateur', 'Valeur']],
+      body: [
+        ['Effectif etudiant', String(stats.students)],
+        ["Unites d'enseignement", String(stats.courses)],
+        ['Tresorerie (Ar)', stats.revenue.toLocaleString()],
+      ],
+    });
+    autoTable(doc, {
+      head: [['Filiere', 'Effectif']],
+      body: stats.studentsByFiliere.map((f: any) => [f.name, String(f.value)]),
+    });
+    doc.save(`UniFlow_Rapport_${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success('Rapport global genere');
+  };
 
   return (
     <div className="space-y-8">
@@ -111,7 +135,7 @@ export const Dashboard: React.FC = () => {
               <Clock size={14} className="text-indigo-500" />
               Relevé J-{new Date().getDate()}
            </div>
-           <button className="bg-indigo-600 text-white rounded-md px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+           <button onClick={handleGenerateReport} className="bg-indigo-600 text-white rounded-md px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
              Générer Rapport Global
            </button>
         </div>
@@ -119,10 +143,10 @@ export const Dashboard: React.FC = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Effectif Étudiant" value={stats.students.toLocaleString()} trend={12} icon={Users} color="indigo" />
-        <StatCard title="Unités Enseignement" value={stats.courses} trend={5} icon={BookOpen} color="emerald" />
-        <StatCard title="Trésorerie Mensuelle" value={`${(stats.revenue / 1000000).toFixed(1)}M Ar`} trend={8} icon={CreditCard} color="amber" />
-        <StatCard title="Indice de Réussite" value="76.4%" trend={-2} icon={TrendingUp} color="indigo" />
+        <StatCard title="Effectif Étudiant" value={stats.students.toLocaleString()} trend={12} icon={Users} iconClass="bg-indigo-50 text-indigo-600" />
+        <StatCard title="Unités Enseignement" value={stats.courses} trend={5} icon={BookOpen} iconClass="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Trésorerie Mensuelle" value={`${(stats.revenue / 1000000).toFixed(1)}M Ar`} trend={8} icon={CreditCard} iconClass="bg-amber-50 text-amber-600" />
+        <StatCard title="Indice de Réussite" value="76.4%" trend={-2} icon={TrendingUp} iconClass="bg-indigo-50 text-indigo-600" />
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -134,8 +158,21 @@ export const Dashboard: React.FC = () => {
                   <BarChartIcon size={18} className="mr-3 text-indigo-500" />
                   Répartition Dynamique par Filière
                 </h3>
-                <button className="text-[10px] font-black text-indigo-600 uppercase hover:underline">Détails Expert</button>
+                <button onClick={() => setShowExpert(v => !v)} className="text-[10px] font-black text-indigo-600 uppercase hover:underline">{showExpert ? 'Masquer' : 'Détails Expert'}</button>
              </div>
+             {showExpert && (
+               <div className="px-8 pt-6 border-b border-slate-100 bg-indigo-50/30">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6">
+                    {stats.studentsByFiliere.map((f: any, i: number) => (
+                      <div key={i} className="bg-white border border-slate-100 rounded-md p-4">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">{f.name}</p>
+                        <p className="text-lg font-black text-slate-800 tracking-tighter">{f.value}</p>
+                        <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">{stats.students > 0 ? ((f.value / stats.students) * 100).toFixed(1) : '0.0'}%</p>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+             )}
              <div className="flex-1 p-8">
                 <ResponsiveContainer width="100%" height="100%">
                    <BarChart data={stats.studentsByFiliere}>
@@ -159,22 +196,25 @@ export const Dashboard: React.FC = () => {
                 </h3>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {(stats.studentsByFiliere || []).slice(0, 4).map((f, i) => (
+                {(stats.studentsByFiliere || []).slice(0, 4).map((f, i) => {
+                  const pct = stats.students > 0 ? (f.value / stats.students) * 100 : 0;
+                  return (
                   <div key={i} className="space-y-2">
                      <div className="flex justify-between text-[11px] font-black uppercase">
                         <span className="text-slate-400 tracking-widest">{f.name}</span>
-                        <span className="text-slate-900">{(f.value / stats.students * 100).toFixed(1)}%</span>
+                        <span className="text-slate-900">{pct.toFixed(1)}%</span>
                      </div>
                      <div className="h-2 w-full bg-slate-100 rounded-md overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          animate={{ width: `${(f.value / stats.students * 100)}%` }}
+                          animate={{ width: `${pct}%` }}
                           transition={{ duration: 1, ease: "easeOut" }}
                           className="h-full bg-indigo-500" 
                         />
                      </div>
                   </div>
-                ))}
+                  );
+                })}
              </div>
           </div>
         </div>
@@ -224,7 +264,7 @@ export const Dashboard: React.FC = () => {
                       paddingAngle={8}
                       dataKey="value"
                     >
-                      {stats.studentsByFiliere.map((entry, index) => (
+                      {stats.studentsByFiliere.map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={COLORS[index % COLORS.length]} 

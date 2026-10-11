@@ -10,7 +10,6 @@ import {
   Key,
   Globe
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useAuthStore } from '../store';
 import { storageService } from '../services/localStorageService';
 import { toast } from 'sonner';
@@ -42,12 +41,14 @@ export const Profile: React.FC = () => {
     setLoading(true);
     try {
       const updatedUser = { ...user, ...profileForm };
-      
+
       // Update in localStorage
       localStorage.setItem(storageService.KEYS.AUTH_USER, JSON.stringify(updatedUser));
-      
-      // If we had a USERS collection, we would update it there too
-      // storageService.update(storageService.KEYS.USERS, user.uid, profileForm);
+
+      // Persistance dans la collection des comptes enregistrés
+      if (user.uid !== 'admin-001') {
+        storageService.update(storageService.KEYS.USERS, user.uid, profileForm);
+      }
 
       setUser(updatedUser);
       toast.success('Profil mis à jour avec succès');
@@ -71,11 +72,13 @@ export const Profile: React.FC = () => {
     
     setLoading(true);
     try {
-      // Simple verification for local mode
-      // In a real local app, we might store the password in a users table
-      // For this migration, we'll just simulate it or update the session
-      
-      toast.success('Mot de passe modifié avec succès (Simulé en local)');
+      const result = storageService.changePassword(user.uid, passwords.old, passwords.new);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success('Mot de passe modifié avec succès');
       setPasswords({ old: '', new: '', confirm: '' });
     } catch (error: any) {
       console.error(error);
@@ -135,7 +138,7 @@ export const Profile: React.FC = () => {
               </div>
 
               <h2 className="text-xl font-black text-[#1e1b4b] uppercase tracking-tighter">{user?.displayName}</h2>
-              <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-1">Administrateur Senior</p>
+              <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-1">{user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</p>
               
               <div className="mt-8 pt-8 border-t border-slate-50 grid grid-cols-2 gap-4">
                  <div className="text-left">
@@ -157,7 +160,7 @@ export const Profile: React.FC = () => {
               <p className="text-[10px] text-indigo-300 font-bold leading-relaxed mb-6">Votre accès est protégé par un cryptage end-to-end de niveau militaire.</p>
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                  <Globe size={14} className="text-indigo-400" />
-                 Last IP: 197.242.xx.xx
+                 Session locale sécurisée
               </div>
            </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, MoreVertical, BookOpen, Trash2, Download, Star, Clock } from 'lucide-react';
+import { FileText, BookOpen, Trash2, Star, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Book } from '../types';
 import { format } from 'date-fns';

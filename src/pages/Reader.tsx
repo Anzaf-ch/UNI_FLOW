@@ -7,7 +7,6 @@ import {
   ZoomIn, 
   ZoomOut, 
   Download, 
-  FileText,
   Loader2,
   AlertCircle,
   Menu,
@@ -16,7 +15,6 @@ import {
   Underline as UnderlineIcon,
   Trash2,
   Bookmark,
-  Search,
   BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -380,7 +378,7 @@ export const Reader: React.FC = () => {
                     file={book.file} 
                     onLoadSuccess={onDocumentLoadSuccess} 
                     onItemClick={onItemClick}
-                    onLoadError={(err) => toast.error('Erreur PDF')} 
+                    onLoadError={() => toast.error('Erreur PDF')} 
                     loading={<div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin text-indigo-600" size={32} /></div>}
                   >
                     <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} renderAnnotationLayer={true} loading={null} />

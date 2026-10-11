@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, MapPin, User, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Clock, MapPin, Edit2, Trash2 } from 'lucide-react';
 import { useScheduleStore } from '../../store/useScheduleStore';
 import { ScheduleSlot } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,7 +29,7 @@ export const ScheduleGrid = ({ onEdit }: { onEdit: (slot: ScheduleSlot) => void 
        {/* Header Days */}
        <div className="grid grid-cols-8 border-b border-slate-200 bg-[#1e1b4b]">
           <div className="p-4 border-r border-white/5" />
-          {DAYS.map((day, i) => (
+          {DAYS.map((day) => (
             <div key={day} className="p-4 text-center border-r border-white/5 last:border-r-0">
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">{day}</span>
             </div>

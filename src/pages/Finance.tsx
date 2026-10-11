@@ -3,10 +3,8 @@ import { storageService } from '../services/localStorageService';
 import { useAuthStore } from '../store';
 import { 
   Wallet, 
-  Smartphone, 
   CreditCard, 
   History, 
-  Plus, 
   Briefcase, 
   Receipt, 
   ArrowUpRight, 
@@ -20,7 +18,6 @@ import {
   FileText,
   DollarSign,
   TrendingUp,
-  Filter,
   ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,16 +26,13 @@ import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
-  BarChart, 
   Bar, 
-  LineChart,
   Line,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Cell,
   ComposedChart,
   Legend
 } from 'recharts';

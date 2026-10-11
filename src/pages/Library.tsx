@@ -2,13 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Library as LibraryIcon, 
   Search, 
-  Filter, 
   Plus, 
-  BookOpen, 
   Book as BookIcon,
-  Grid,
-  List as ListIcon,
-  AlertCircle,
   Loader2,
   Bookmark
 } from 'lucide-react';

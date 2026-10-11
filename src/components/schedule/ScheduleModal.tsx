@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Save, Clock, BookOpen, User, MapPin, Briefcase, Calendar } from 'lucide-react';
+import { X, Save, Clock, User, MapPin, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScheduleSlot } from '../../types';
 import { useScheduleStore } from '../../store/useScheduleStore';

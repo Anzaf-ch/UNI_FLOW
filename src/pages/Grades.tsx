@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageService } from '../services/localStorageService';
 import { useAuthStore } from '../store';
-import { GraduationCap, TrendingUp, AlertCircle, Sparkles, FileDown } from 'lucide-react';
+import { GraduationCap, TrendingUp, Sparkles, FileDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -160,7 +160,7 @@ export const Grades: React.FC = () => {
                       <td colSpan={5} className="px-8 py-20 text-center text-slate-400 italic font-bold uppercase tracking-widest text-[10px]">Aucun résultat académique enregistré pour l'année en cours.</td>
                     </tr>
                   )}
-                  {grades.map((grade, idx) => (
+                  {grades.map((grade) => (
                     <tr key={grade.id} className="hover:bg-slate-50/80 transition-all group">
                       <td className="px-8 py-5">
                          <div className="text-[12px] font-black text-[#1e1b4b] uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{getCourseName(grade.courseId)}</div>

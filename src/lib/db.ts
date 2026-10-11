@@ -1,4 +1,4 @@
-import { openDB, IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
 
 const DB_NAME = 'uniflow_offline';
 const STORE_NAME = 'sync_queue';

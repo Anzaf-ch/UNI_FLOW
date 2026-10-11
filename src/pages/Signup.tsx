@@ -26,27 +26,21 @@ export const Signup: React.FC = () => {
     }
     
     setLoading(true);
-    
-    setTimeout(() => {
-      // Pour une version locale, on peut simplement "stocker" l'utilisateur
-      // Dans cette version simplifiée, on va juste le connecter directement
-      // s'il s'inscrit, car on a déjà un admin par défaut.
-      const profile: UserProfile = {
-        uid: 'user-' + Math.random().toString(36).substr(2, 9),
-        email: email,
-        displayName: name,
-        role: 'admin',
-        createdAt: new Date().toISOString()
-      };
 
-      // Simuler la sauvegarde de session
-      localStorage.setItem(storageService.KEYS.AUTH_USER, JSON.stringify(profile));
-      
-      setUser(profile);
-      toast.success('Compte local créé avec succès');
+    setTimeout(() => {
+      const result = storageService.register(email, password, name);
+
+      if (result.error) {
+        toast.error(result.error);
+        setLoading(false);
+        return;
+      }
+
+      setUser(result.user as UserProfile);
+      toast.success('Compte créé avec succès');
       navigate('/');
       setLoading(false);
-    }, 800);
+    }, 600);
   };
 
   return (

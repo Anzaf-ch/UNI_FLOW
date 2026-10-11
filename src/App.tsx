@@ -22,7 +22,7 @@ import { ScheduleHeader } from './components/schedule/ScheduleHeader';
 import { ScheduleGrid } from './components/schedule/ScheduleGrid';
 import { ScheduleModal } from './components/schedule/ScheduleModal';
 import { useScheduleStore } from './store/useScheduleStore';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { StudentHeader } from './components/students/StudentHeader';
 import { StudentTable } from './components/students/StudentTable';
 import { StudentFormModal } from './components/students/StudentFormModal';
@@ -34,20 +34,42 @@ import { useStudentStore } from './store/useStudentStore';
 export const Academic: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [, setLoading] = useState(true);
+  const [levelFilter, setLevelFilter] = useState<'Tous' | 'L1' | 'L2'>('Tous');
 
   // États pour gérer l'ouverture des modals
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
   const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
+  const [deptForm, setDeptForm] = useState({ name: '', code: '' });
+
+  const refresh = () => {
+    setDepartments(storageService.getAll(storageService.KEYS.DEPARTMENTS));
+    setCourses(storageService.getAll(storageService.KEYS.COURSES));
+  };
 
   useEffect(() => {
-    const fetchData = () => {
-      setDepartments(storageService.getAll(storageService.KEYS.DEPARTMENTS));
-      setCourses(storageService.getAll(storageService.KEYS.COURSES));
-      setLoading(false);
-    };
-    fetchData();
+    refresh();
   }, []);
+
+  const handleSaveDept = () => {
+    if (!deptForm.name.trim()) {
+      toast.error('Le nom du département est requis');
+      return;
+    }
+    storageService.add(storageService.KEYS.DEPARTMENTS, {
+      name: deptForm.name.trim(),
+      code: (deptForm.code.trim() || deptForm.name.trim().slice(0, 3)).toUpperCase(),
+      description: ''
+    });
+    refresh();
+    setDeptForm({ name: '', code: '' });
+    setIsDeptModalOpen(false);
+    toast.success('Département créé avec succès');
+  };
+
+  const levelToSemester: Record<string, number> = { L1: 1, L2: 2 };
+  const visibleCourses = levelFilter === 'Tous'
+    ? courses
+    : courses.filter(c => c.semester === levelToSemester[levelFilter]);
 
   return (
     <div className="space-y-8">
@@ -87,23 +109,36 @@ export const Academic: React.FC = () => {
             <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Programmes Disponibles</span>
               <div className="flex gap-2">
-                <button className="bg-indigo-600 text-white px-4 py-1.5 rounded-sm text-[10px] font-black tracking-widest uppercase shadow-lg shadow-indigo-600/20">Tous</button>
-                <button className="text-slate-400 px-4 py-1.5 rounded-sm text-[10px] font-black tracking-widest uppercase hover:bg-slate-100">L1</button>
-                <button className="text-slate-400 px-4 py-1.5 rounded-sm text-[10px] font-black tracking-widest uppercase hover:bg-slate-100">L2</button>
+                {(['Tous', 'L1', 'L2'] as const).map(level => (
+                  <button
+                    key={level}
+                    onClick={() => setLevelFilter(level)}
+                    className={levelFilter === level
+                      ? 'bg-indigo-600 text-white px-4 py-1.5 rounded-sm text-[10px] font-black tracking-widest uppercase shadow-lg shadow-indigo-600/20'
+                      : 'text-slate-400 px-4 py-1.5 rounded-sm text-[10px] font-black tracking-widest uppercase hover:bg-slate-100'}
+                  >
+                    {level}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto scrollbar-hide">
-              {courses.map(course => (
+              {visibleCourses.map(course => (
                  <div key={course.id} className="p-5 bg-slate-50 border border-slate-50 rounded-md flex justify-between items-center group hover:border-indigo-600/20 hover:bg-white hover:shadow-xl hover:shadow-indigo-600/5 transition-all">
                     <div className="space-y-1">
                       <h4 className="text-xs font-black text-[#1e1b4b] uppercase tracking-tight">{course.name}</h4>
-                      <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">{course.code}</p>
+                      <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">{course.code} · Semestre {course.semester}</p>
                     </div>
                     <div className="text-right">
                        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-sm uppercase tracking-tighter shadow-sm">{course.credits} Cr</span>
                     </div>
                  </div>
               ))}
+              {visibleCourses.length === 0 && (
+                <div className="col-span-2 py-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                  Aucun programme pour ce niveau
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -132,7 +167,21 @@ export const Academic: React.FC = () => {
                 </label>
                 <input 
                   type="text" 
+                  value={deptForm.name}
+                  onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
                   placeholder="EX: INFORMATIQUE OU GESTION" 
+                  className="w-full bg-[#1e293b] border-2 border-slate-700 text-white rounded-md px-4 py-3 text-xs font-bold outline-none focus:border-indigo-500 focus:bg-[#1e293b] transition-all placeholder:text-slate-500 uppercase tracking-wide shadow-inner" 
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  Code (optionnel)
+                </label>
+                <input 
+                  type="text" 
+                  value={deptForm.code}
+                  onChange={(e) => setDeptForm({ ...deptForm, code: e.target.value })}
+                  placeholder="EX: IT-AI" 
                   className="w-full bg-[#1e293b] border-2 border-slate-700 text-white rounded-md px-4 py-3 text-xs font-bold outline-none focus:border-indigo-500 focus:bg-[#1e293b] transition-all placeholder:text-slate-500 uppercase tracking-wide shadow-inner" 
                 />
               </div>
@@ -141,13 +190,13 @@ export const Academic: React.FC = () => {
             {/* Boutons d'action */}
             <div className="flex justify-end gap-3 pt-2 border-t border-slate-800">
               <button 
-                onClick={() => setIsDeptModalOpen(false)} 
+                onClick={() => { setIsDeptModalOpen(false); setDeptForm({ name: '', code: '' }); }} 
                 className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-black rounded-md uppercase tracking-wider transition-colors border border-slate-700"
               >
                 Annuler
               </button>
               <button 
-                onClick={() => setIsDeptModalOpen(false)}
+                onClick={handleSaveDept}
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black rounded-md uppercase tracking-wider shadow-lg shadow-indigo-600/30 transition-colors"
               >
                 Sauvegarder
@@ -162,7 +211,17 @@ export const Academic: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-md shadow-2xl max-w-md w-full border border-slate-100">
             <h3 className="text-xs font-black uppercase tracking-[0.15em] text-[#1e1b4b] mb-4">Configuration de la Structure</h3>
-            <p className="text-[11px] text-slate-400 font-bold uppercase mb-4">Architecture globale du campus.</p>
+            <p className="text-[11px] text-slate-400 font-bold uppercase mb-6">Architecture globale du campus.</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-5 bg-slate-50 rounded-md border border-slate-100">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Départements</span>
+                <span className="text-2xl font-black text-indigo-600 tracking-tighter">{departments.length}</span>
+              </div>
+              <div className="p-5 bg-slate-50 rounded-md border border-slate-100">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Programmes</span>
+                <span className="text-2xl font-black text-indigo-600 tracking-tighter">{courses.length}</span>
+              </div>
+            </div>
             <div className="flex justify-end gap-2 mt-6">
               <button onClick={() => setIsStructureModalOpen(false)} className="px-4 py-2 bg-indigo-600 text-white text-[10px] font-black rounded-sm uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-colors">Fermer</button>
             </div>
@@ -339,7 +398,10 @@ export const Enrollment: React.FC = () => {
                <span className="text-xl font-black text-indigo-600 tracking-tighter">{students.length}</span>
             </div>
             <div className="h-10 w-px bg-slate-100" />
-            <button className="text-[10px] font-black text-indigo-400 uppercase flex items-center gap-2 py-2 px-4 rounded-sm bg-indigo-50 border border-indigo-100 shadow-sm">
+            <button
+              onClick={() => { fetchStudents(); toast.success('Effectifs synchronisés'); }}
+              className="text-[10px] font-black text-indigo-400 uppercase flex items-center gap-2 py-2 px-4 rounded-sm bg-indigo-50 border border-indigo-100 shadow-sm hover:bg-indigo-100 transition-colors"
+            >
                Live Sync
             </button>
          </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Save, User as UserIcon, MapPin, Calendar as CalendarIcon, Briefcase, Hash } from 'lucide-react';
+import { X, Save, User as UserIcon, MapPin, Hash } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Student } from '../../types';
 import { useStudentStore } from '../../store/useStudentStore';
@@ -15,7 +15,7 @@ export const StudentFormModal = ({ isOpen, onClose, student }: StudentFormModalP
   const [formData, setFormData] = useState<Partial<Student>>({
     firstName: '',
     lastName: '',
-    filiere: 'Génie Logiciel',
+    filiere: 'Informatique',
     classe: 'L1',
     birthDate: '',
     birthPlace: '',
@@ -30,7 +30,7 @@ export const StudentFormModal = ({ isOpen, onClose, student }: StudentFormModalP
       setFormData({
         firstName: '',
         lastName: '',
-        filiere: 'Génie Logiciel',
+        filiere: 'Informatique',
         classe: 'L1',
         birthDate: '',
         birthPlace: '',
@@ -166,7 +166,7 @@ export const StudentFormModal = ({ isOpen, onClose, student }: StudentFormModalP
                              onChange={(e) => setFormData({...formData, filiere: e.target.value})}
                              className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
                           >
-                             <option value="Génie Logiciel">Génie Logiciel</option>
+                             <option value="Informatique">Informatique</option>
                              <option value="Économie">Économie</option>
                              <option value="Communication">Communication</option>
                              <option value="Droit">Droit</option>

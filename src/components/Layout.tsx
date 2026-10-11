@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -39,6 +39,46 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { isSidebarOpen, toggleSidebar } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [query, setQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const searchResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const students = storageService.getAll(storageService.KEYS.STUDENTS);
+    const courses = storageService.getAll(storageService.KEYS.COURSES);
+    const teachers = storageService.getAll(storageService.KEYS.TEACHERS);
+    const results: { id: string; label: string; sub: string; path: string }[] = [];
+    students
+      .filter((s: any) => `${s.name || ''} ${s.matricule || ''} ${s.filiere || ''}`.toLowerCase().includes(q))
+      .slice(0, 4)
+      .forEach((s: any, i: number) => results.push({ id: `s-${i}`, label: s.name || 'Étudiant', sub: `${s.matricule || ''} · Étudiant`.trim(), path: '/enrollment' }));
+    courses
+      .filter((c: any) => `${c.name || ''} ${c.code || ''}`.toLowerCase().includes(q))
+      .slice(0, 4)
+      .forEach((c: any, i: number) => results.push({ id: `c-${i}`, label: c.name || 'Cours', sub: `${c.code || ''} · Programme`.trim(), path: '/academic' }));
+    teachers
+      .filter((t: any) => `${t.name || ''} ${t.department || ''}`.toLowerCase().includes(q))
+      .slice(0, 4)
+      .forEach((t: any, i: number) => results.push({ id: `t-${i}`, label: t.name || 'Enseignant', sub: `${t.department || ''} · Enseignant`.trim(), path: '/teachers' }));
+    return results.slice(0, 8);
+  }, [query]);
+
+  const notifications = useMemo(() => {
+    const transactions = storageService.getAll(storageService.KEYS.TRANSACTIONS);
+    const students = storageService.getAll(storageService.KEYS.STUDENTS);
+    const notes: { id: string; title: string; desc: string }[] = [];
+    const pending = transactions.filter((t: any) => t.status === 'pending' || t.status === 'en attente');
+    if (pending.length) notes.push({ id: 'p', title: `${pending.length} paiement(s) en attente`, desc: 'Consulter le module Finance' });
+    notes.push(
+      students.length
+        ? { id: 's', title: `${students.length} étudiants actifs`, desc: 'Effectif synchronisé' }
+        : { id: 's', title: 'Aucun étudiant inscrit', desc: 'Démarrer les inscriptions' }
+    );
+    notes.push({ id: 'up', title: 'Système opérationnel', desc: 'Toutes les unités sont en ligne' });
+    return notes;
+  }, [showNotifications, location.pathname]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -169,15 +209,53 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={14} />
               <input 
                 type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Rechercher un dossier, un cours..." 
                 className="w-full rounded-sm bg-slate-50 py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:bg-white border border-slate-200 transition-all"
               />
+              {query.trim() && (
+                <div className="absolute top-full mt-2 left-0 w-full bg-white border border-slate-200 rounded-md shadow-xl z-40 overflow-hidden">
+                  {searchResults.length === 0 ? (
+                    <div className="px-4 py-3 text-[10px] font-black text-slate-300 uppercase tracking-widest">Aucun résultat</div>
+                  ) : searchResults.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => { navigate(r.path); setQuery(''); }}
+                      className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <p className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{r.label}</p>
+                      <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{r.sub}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="h-8 w-px bg-slate-100" />
-            <button className="relative p-2 rounded-sm bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-rose-500 border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(v => !v)}
+                className="relative p-2 rounded-sm bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+              >
+                <Bell size={20} />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[8px] font-black text-white border-2 border-white">{notifications.length}</span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute top-full mt-2 right-0 w-80 bg-white border border-slate-200 rounded-md shadow-xl z-40 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Notifications</p>
+                  </div>
+                  {notifications.map((n) => (
+                    <div key={n.id} className="px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                      <p className="text-xs font-black text-slate-800 tracking-tight">{n.title}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{n.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="h-8 w-px bg-slate-100" />
             <div className="flex items-center gap-2">
                <div className="h-8 w-8 rounded-sm bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600">FR</div>

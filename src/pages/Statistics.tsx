@@ -3,8 +3,6 @@ import {
   Users, 
   GraduationCap, 
   TrendingUp, 
-  ArrowUpRight, 
-  ArrowDownRight, 
   Wallet,
   PieChart as PieIcon,
   BarChart as BarIcon,
@@ -34,7 +32,7 @@ export const Statistics: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {

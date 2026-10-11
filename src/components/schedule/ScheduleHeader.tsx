@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Sparkles, Filter, ChevronDown } from 'lucide-react';
 import { useScheduleStore } from '../../store/useScheduleStore';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 
 const FILIERES = ['Informatique', 'Droit', 'Économie', 'Communication', 'Management'];
 const CLASSES = ['L1', 'L2', 'L3', 'M1', 'M2'];
@@ -79,7 +80,23 @@ const FiliereDropdown: React.FC<{ filiere: string }> = ({ filiere }) => {
 };
 
 export const ScheduleHeader = ({ onAddClick }: { onAddClick: () => void }) => {
-  const { activeFiliere, activeClasse } = useScheduleStore();
+  const { activeFiliere, activeClasse, schedules } = useScheduleStore();
+
+  const handleSmartCheck = () => {
+    const scoped = schedules.filter(s => s.filiere === activeFiliere && (activeClasse === 'Toutes' || s.classe === activeClasse));
+    let conflicts = 0;
+    for (let i = 0; i < scoped.length; i++) {
+      for (let j = i + 1; j < scoped.length; j++) {
+        const a = scoped[i];
+        const b = scoped[j];
+        if (a.dayOfWeek !== b.dayOfWeek) continue;
+        const overlap = (a.startTime < b.endTime) && (a.endTime > b.startTime);
+        if (overlap && (a.classe === b.classe || a.roomId === b.roomId || a.teacherName === b.teacherName)) conflicts++;
+      }
+    }
+    if (conflicts === 0) toast.success('Analyse intelligente : aucun conflit détecté');
+    else toast.error(`Analyse intelligente : ${conflicts} conflit(s) détecté(s)`);
+  };
 
   return (
     <div className="space-y-8">
@@ -94,7 +111,10 @@ export const ScheduleHeader = ({ onAddClick }: { onAddClick: () => void }) => {
           </div>
         </div>
         <div className="flex gap-4">
-           <button className="bg-white border border-slate-200 h-12 w-12 flex items-center justify-center rounded-sm text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm">
+           <button
+             onClick={handleSmartCheck}
+             title="Analyse intelligente des conflits"
+             className="bg-white border border-slate-200 h-12 w-12 flex items-center justify-center rounded-sm text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm">
              <Sparkles size={20} />
            </button>
            <button 
