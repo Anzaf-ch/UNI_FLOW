@@ -1,0 +1,15 @@
+{
+  "name": "UniFlow",
+  "description": "Plateforme SaaS intelligente de gestion universitaire fullstack avec IA, gestion financière et mode offline.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "academic_management",
+    "financial_tracking",
+    "ai_analytics",
+    "realtime_chat"
+  ]
+}

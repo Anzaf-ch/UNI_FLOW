@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- GLOBAL SAFETY NET ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- SHARED HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // RBAC: Roles are fetched from the user's document
+    // We allow hardcoded admin email for bootstrapping
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'andrianiainafanomezanatefy@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isTeacherRole() {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher')
+      );
+    }
+
+    function staffHasAccess() {
+      return isAdmin() || isTeacherRole();
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- VALIDATION BLUEPRINTS ---
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role in ['admin', 'teacher', 'student'];
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'matricule', 'classe', 'filiere', 'status']) &&
+             data.firstName is string && data.firstName.size() <= 100 &&
+             data.lastName is string && data.lastName.size() <= 100 &&
+             data.matricule is string && data.matricule.size() <= 20 &&
+             data.classe is string && data.classe.size() <= 20 &&
+             data.filiere is string && data.filiere.size() <= 100 &&
+             data.status in ['active', 'suspended', 'graduated'];
+    }
+
+    function isValidTeacher(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'email', 'subject', 'status']) &&
+             data.firstName is string && data.firstName.size() <= 100 &&
+             data.lastName is string && data.lastName.size() <= 100 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.subject is string && data.subject.size() <= 100 &&
+             data.status in ['active', 'on_leave', 'inactive'];
+    }
+
+    function isValidSchedule(data) {
+      return data.keys().hasAll(['subject', 'teacherName', 'filiere', 'classe', 'dayOfWeek', 'startTime', 'endTime', 'roomId']) &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.teacherName is string && data.teacherName.size() <= 100 &&
+             data.filiere is string && data.filiere.size() <= 100 &&
+             data.classe is string && data.classe.size() <= 20 &&
+             data.dayOfWeek is int && data.dayOfWeek >= 0 && data.dayOfWeek <= 6 &&
+             data.startTime is string && data.startTime.size() == 5 &&
+             data.endTime is string && data.endTime.size() == 5 &&
+             data.roomId is string && data.roomId.size() <= 20;
+    }
+
+    // --- COLLECTIONS ---
+
+    // USERS
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) || isAdmin()) && 
+                    (isAdmin() || (request.resource.data.role == resource.data.role)) &&
+                    isValidUser(request.resource.data);
+    }
+
+    // STUDENTS
+    match /students/{studentId} {
+      allow read: if staffHasAccess();
+      allow create: if isAdmin() && isValidStudent(request.resource.data);
+      allow update: if isAdmin() && isValidStudent(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // TEACHERS
+    match /teachers/{teacherId} {
+      allow read: if staffHasAccess();
+      allow create: if isAdmin() && isValidTeacher(request.resource.data);
+      allow update: if isAdmin() && isValidTeacher(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // DEPARTMENTS
+    match /departments/{deptId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // COURSES
+    match /courses/{courseId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ENROLLMENTS
+    match /enrollments/{enrollmentId} {
+      allow read: if staffHasAccess() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // GRADES
+    match /grades/{gradeId} {
+      allow read: if staffHasAccess() || (isSignedIn() && resource.data.studentId == request.auth.uid);
+      allow write: if staffHasAccess();
+    }
+
+    // TRANSACTIONS
+    match /transactions/{txId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    // MESSAGES
+    match /messages/{msgId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+    }
+
+    // SCHEDULES
+    match /schedules/{schedId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidSchedule(request.resource.data);
+      allow update: if isAdmin() && isValidSchedule(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

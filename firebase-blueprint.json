@@ -1,0 +1,190 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a student, teacher, or administrator in the system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "teacher", "student"] },
+        "photoURL": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Academic department (e.g., Computer Science).",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "code"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "A subject or module taught in a department.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "credits": { "type": "number" },
+        "teacherId": { "type": "string" },
+        "semester": { "type": "number" }
+      },
+      "required": ["name", "code", "departmentId"]
+    },
+    "Enrollment": {
+      "title": "Enrollment",
+      "description": "Links a student to a department/year.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "year": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "active", "completed"] },
+        "paymentStatus": { "type": "string" }
+      },
+      "required": ["studentId", "departmentId", "year"]
+    },
+    "Grade": {
+      "title": "Grade",
+      "description": "Student assignment/exam grade.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "coefficient": { "type": "number" },
+        "term": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "courseId", "score"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction for school fees.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["mvola", "orange_money", "card"] },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "method", "status"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Real-time message in a channel or DM.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "channelId": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "content"]
+    },
+    "Schedule": {
+      "title": "Schedule",
+      "description": "Class schedule slot.",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "roomId": { "type": "string" },
+        "dayOfWeek": { "type": "number" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "groupId": { "type": "string" }
+      },
+      "required": ["courseId", "dayOfWeek", "startTime", "endTime"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Represents a student enrolled in the university.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "matricule": { "type": "string" },
+        "classe": { "type": "string" },
+        "filiere": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "birthPlace": { "type": "string" },
+        "address": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "suspended", "graduated"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["firstName", "lastName", "matricule", "classe", "filiere", "status"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "University faculty member.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "specialty": { "type": "string" },
+        "subject": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "on_leave", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["firstName", "lastName", "email", "subject", "status"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "System users collection"
+    },
+    "departments": {
+      "schema": "Department",
+      "description": "Academic departments"
+    },
+    "courses": {
+      "schema": "Course",
+      "description": "Course catalog"
+    },
+    "enrollments": {
+      "schema": "Enrollment",
+      "description": "Student enrollment records"
+    },
+    "grades": {
+      "schema": "Grade",
+      "description": "Student academic results"
+    },
+    "transactions": {
+      "schema": "Transaction",
+      "description": "Financial records"
+    },
+    "messages": {
+      "schema": "Message",
+      "description": "Chat messages"
+    },
+    "schedules": {
+      "schema": "Schedule",
+      "description": "Class schedules"
+    },
+    "students": {
+      "schema": "Student",
+      "description": "Student master records"
+    },
+    "teachers": {
+      "schema": "Teacher",
+      "description": "University faculty members"
+    }
+  }
+}
